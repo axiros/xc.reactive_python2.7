@@ -1,0 +1,27 @@
+{
+  "arch": "x86_64", 
+  "build": "py27_1", 
+  "build_number": 1, 
+  "depends": [
+    "python >=2.7,<2.8.0a0"
+  ], 
+  "files": [
+    "lib/python2.7/site-packages/six-1.11.0-py2.7.egg-info/PKG-INFO", 
+    "lib/python2.7/site-packages/six-1.11.0-py2.7.egg-info/SOURCES.txt", 
+    "lib/python2.7/site-packages/six-1.11.0-py2.7.egg-info/dependency_links.txt", 
+    "lib/python2.7/site-packages/six-1.11.0-py2.7.egg-info/top_level.txt", 
+    "lib/python2.7/site-packages/six.py", 
+    "lib/python2.7/site-packages/six.pyc"
+  ], 
+  "installed_by": "base_hg_git_construct-1.0.0-Linux-x86_64.sh", 
+  "license": "MIT", 
+  "license_family": "MIT", 
+  "link": null, 
+  "md5": "c13b7574e2357aeea5ee3dc755ee699f", 
+  "name": "six", 
+  "platform": "linux", 
+  "subdir": "linux-64", 
+  "timestamp": 1530693756133, 
+  "url": "http://repo.anaconda.com/pkgs/main/linux-64/six-1.11.0-py27_1.tar.bz2", 
+  "version": "1.11.0"
+}

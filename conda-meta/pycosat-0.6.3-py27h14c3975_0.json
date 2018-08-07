@@ -1,0 +1,25 @@
+{
+  "arch": "x86_64", 
+  "build": "py27h14c3975_0", 
+  "build_number": 0, 
+  "depends": [
+    "libgcc-ng >=7.2.0", 
+    "python >=2.7,<2.8.0a0"
+  ], 
+  "files": [
+    "lib/python2.7/site-packages/pycosat-0.6.3-py2.7.egg-info", 
+    "lib/python2.7/site-packages/pycosat.so", 
+    "lib/python2.7/site-packages/test_pycosat.py", 
+    "lib/python2.7/site-packages/test_pycosat.pyc"
+  ], 
+  "installed_by": "base_hg_git_construct-1.0.0-Linux-x86_64.sh", 
+  "license": "MIT", 
+  "link": null, 
+  "md5": "38298e902f033d650e4c7defe156c06f", 
+  "name": "pycosat", 
+  "platform": "linux", 
+  "subdir": "linux-64", 
+  "timestamp": 1530812765823, 
+  "url": "http://repo.anaconda.com/pkgs/main/linux-64/pycosat-0.6.3-py27h14c3975_0.tar.bz2", 
+  "version": "0.6.3"
+}

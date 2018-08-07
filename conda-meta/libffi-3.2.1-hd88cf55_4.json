@@ -1,0 +1,34 @@
+{
+  "arch": "x86_64", 
+  "build": "hd88cf55_4", 
+  "build_number": 4, 
+  "depends": [
+    "libgcc-ng 7.2.0.*", 
+    "libstdcxx-ng 7.2.0.*"
+  ], 
+  "files": [
+    "include/ffi.h", 
+    "include/ffitarget.h", 
+    "lib/libffi.a", 
+    "lib/libffi.la", 
+    "lib/libffi.so", 
+    "lib/libffi.so.6", 
+    "lib/libffi.so.6.0.4", 
+    "lib/pkgconfig/libffi.pc", 
+    "share/info/libffi.info", 
+    "share/man/man3/ffi.3", 
+    "share/man/man3/ffi_call.3", 
+    "share/man/man3/ffi_prep_cif.3", 
+    "share/man/man3/ffi_prep_cif_var.3"
+  ], 
+  "installed_by": "base_hg_git_construct-1.0.0-Linux-x86_64.sh", 
+  "license": "Custom", 
+  "link": null, 
+  "md5": "723c98107d830bdf000772bf1976e0c3", 
+  "name": "libffi", 
+  "platform": "linux", 
+  "subdir": "linux-64", 
+  "timestamp": 1510177337742, 
+  "url": "http://repo.anaconda.com/pkgs/main/linux-64/libffi-3.2.1-hd88cf55_4.tar.bz2", 
+  "version": "3.2.1"
+}

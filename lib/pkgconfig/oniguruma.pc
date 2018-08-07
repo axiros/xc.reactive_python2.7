@@ -1,0 +1,14 @@
+prefix=/xc.reactive_python2.7
+exec_prefix=/xc.reactive_python2.7
+libdir=/xc.reactive_python2.7/lib
+includedir=/xc.reactive_python2.7/include
+datarootdir=/xc.reactive_python2.7/share
+datadir=/xc.reactive_python2.7/share
+
+Name: oniguruma
+Description: Regular expression library
+Version: 6.8.2
+Requires:
+Libs: -L${libdir} -lonig
+Cflags: -I${includedir}
+

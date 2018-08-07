@@ -1,0 +1,308 @@
+#!/usr/bin/env bash
+
+me="$0"
+here="$(unset CDPATH && cd "$(dirname "$BASH_SOURCE")" && echo $PWD)"
+
+# we don't do tmp, thats to risky in container age's private tmps:
+conda_prefix="/xc"
+base_packages="git mercurial constructor"
+dvcs=git
+
+usage="Creates a Bashenv Repo's 'init' branch from scratch
+
+Usage: $me [OPTIONS] go
+
+The init branch is to allow to later create bashenvs from a config file but w/o
+the need for git or hg, i.e. it is intended to be downloaded as snapshot, with
+on installer.
+
+Options:
+-b: Bootstrap. We create a bashenv from scratch, i.e. not a new one from within
+    an existing install with same prefix.
+-c: Create new repo - removing exiting $conda_prefix.$dvcs, if present
+-P: Push updates back to master
+-d: DVCS [$dvcs]
+-p: Set conda prefix [default: $conda_prefix]. If we are within another prefix this
+    sets -b
+-A: Add activate statement to $home/.bashrc
+-a: Activate when done (calling a subshell)
+
+If you point -g to a remote repo, you need git/hg already when running this - we do not
+download this as zip, just in order to create this ;-)
+
+Actions:
+- Downloads initial conda if not present in $here
+- Then runs the flow in main, ending in a git repo.
+
+Example:
+$me -rpg https://github.com/axiros/bashenv_kickstart go
+"
+
+# reminder: -e fails script also if last statement of a function is false
+set -eu
+
+
+# defaults, changeable on CLI switch basis:
+conda_pkg="/tmp/miniconda2.sh"
+# you could point this to a conda built by constructor, already containing
+# more stuff:
+conda_url="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh"
+conda_prefix="/xc"
+
+bootstrap_mode=false
+create_new_repo=false
+
+# remove all $conda_prefix/pkgs after install:
+remove_packages=false
+push_back=false
+
+add_activate_to_bashrc=false
+activate_when_done=false
+
+
+# -------------------------------------------------------------------- internal
+_take_bashenv_from_conda_prefix=
+# fix. always:
+_bashenv_within_conda_path="/bin/app/environ/bash"
+_fn_default_readme="$here/README_default.md"
+# -----------------------------------------------------------------------------
+
+source_functions () {
+    source "$here/../../functions"
+}
+
+parse_cli () {
+    OPTIND=
+    while getopts "Aad:bpg:x" opt; do
+        case "$opt" in
+            d) dvcs="$OPTARG";;
+            A) add_activate_to_bashrc=true;;
+            a) activate_when_done=true;;
+            b) bootstrap_mode=true;;
+            c) create_new_repo=true;;
+            p) push_back=true;;
+            g) repo_to_update_dir_or_url="$OPTARG";;
+            x) set -x;;
+            *) exit_sh_help
+        esac
+    done
+    shift $((OPTIND-1))
+    run_cmd="${1:-}"
+    test "${run_cmd:-}x" != "gox" && exit_sh_help || return 0
+}
+
+do_bootstrap_remove_existing () {
+    test -e "$conda_prefix" || {
+        echo "None found at $conda_prefix"
+        return 0
+    }
+    msg="$conda_prefix already present"
+    msg=" - move it away, then run $me again from there"
+    die "$msg"
+}
+
+_xxxfetch_repo_to_update_url () {
+    local u="${repo_to_update_dir_or_url:-}"
+    test "x$u" == "x" && { echo "none given"; return 0; }
+    test -e "$u" && {
+        local d="$u/.git"
+        test -e "$d" || { "$u has not .git"; return 1; }
+        update_git_dir="$d"
+        return 0
+    }
+    which git || { echo "have not git for $u"; return 1; }
+    test -e "$conda_prefix.orig" && {
+        echo "removing old $conda_prefix.orig"
+        del "$conda_prefix.orig"
+    }
+    git clone  "$u" "$conda_prefix.orig"
+    update_git_dir="$conda_prefix.orig/.git"
+}
+
+
+get_miniconda () {
+    test -e "$conda_pkg" && { echo "already present: $conda_pkg"; return 0; }
+    web_get "$conda_url" "$conda_pkg"
+}
+
+chmod_conda () { chmod +x "$conda_pkg"; }
+
+inst_conda () {
+
+    "$conda_pkg" -b -p "$conda_prefix"
+}
+
+activate_conda () {
+    export PATH="$conda_prefix/bin:$PATH"
+    test "`python -c 'import sys; print(sys.executable)'`" == \
+          "$conda_prefix/bin/python" || die "activation error"
+}
+
+add_base_packages () {
+    for p in $base_packages; do
+        echo "Adding base package $p"
+        conda install -y "$p"
+    done
+}
+
+clean_conda () {
+    $remove_packages || return 0
+    for d in man pkgs
+    do
+        del "$conda_prefix/$d"
+    done
+
+}
+
+is_hg () { test "$dvcs" == "hg"; }
+
+cd_conda () { cd "$conda_prefix"; }
+
+create_dvcs_if_not_exists () {
+    test "${create_new_repo:-}x" == "xtrue" && del "$conda_prefix/.$dvcs"
+    test -e "$conda_prefix/.$dvcs" || {
+        $dvcs init
+        is_hg && {
+            local fni=".hgignore"
+            echo "syntax: glob" > "$fni"
+
+        } || { fni=".gitignore"; del "$fni"; }
+        cat "$here/default_ignore_file" >> "$fni"
+        $dvcs add "$fni" || true
+    }
+    test -e "README.md" || cat "$_fn_default_readme" > "README.md"
+    nfo "Adding..."
+    is_hg && hg addrem
+    is_hg || git add -Av | wc -l
+    echo "...files"
+    $dvcs commit -qam 'by create' || true
+    return 0
+}
+
+
+do_push_up_to_master () {
+    $push_back || { echo "not pushing back"; return 0; }
+    $dvcs push
+}
+
+test_success () {
+    which python | grep "$conda_prefix" | grep -v grep >/dev/null
+}
+
+show_info () {
+    echo "Init conda installed."
+    echo "prefix: "$conda_prefix""
+    echo "base_packages: "$base_packages""
+    echo
+    echo ".$dvcs is updated"
+    $push_back && echo "The repo was pushed" || echo "The repo can be pushed"
+    echo
+    echo "Activate with:"
+    echo "export PATH="$conda_prefix/bin:\$PATH""
+}
+do_check_if_located_within_existing_install () {
+    local d="$here"
+    while true; do
+        test "x$d" == "x/" && return 1
+        d="`dirname "$d"`"
+        test -e "$d/conda" && {
+            _take_bashenv_from_conda_prefix="`dirname "$d"`"
+            echo "we are running within bashenv $_take_bashenv_from_conda_prefix"
+            return 0
+        }
+    done
+}
+
+do_check_if_conda_is_activated () {
+    # if the user did activate a conda we take all from that one then.
+    local d="`python -c 'import sys; print(sys.executable)'`"
+    d="`dirname "$d"`"
+    d="`dirname "$d"`"
+    local b="$d$_bashenv_within_conda_path"
+    test -e "$b" || return 1
+    echo "activated conda found at "$d". Will take bashenv from $b."
+    local h="$_take_bashenv_from_conda_prefix"
+    test "${h:-}x" || {
+    test "x$h" != "x$d" && echo "(ignoring $h)"
+    }
+    _take_bashenv_from_conda_prefix="$d"
+}
+
+do_activate_existing_for_git_hg () {
+    do_check_if_conda_is_activated || \
+    do_check_if_located_within_existing_install && \
+    export PATH="$_take_bashenv_from_conda_prefix/bin:$PATH"
+    do_check_if_conda_is_activated || return 1
+}
+
+do_check_set_bootstrap_mode () {
+    test "x$_take_bashenv_from_conda_prefix" == "x" && bootstrap_mode=true
+    echo "bootstrap mode: $bootstrap_mode"
+}
+
+do_fail_on_no_git_hg () {
+    echo -e "$L\nchecking hg"
+    hg version | head -n 1 || die "hg not found"
+    echo -e "\nchecking git"
+    git version || die "git not found"
+    good "both present"
+}
+
+add_base_env () {
+    local src
+    $bootstrap_mode && src="$here/../../" || \
+        src="$_take_bashenv_from_conda_prefix$_bashenv_within_conda_path"
+    local dest="$conda_prefix$_bashenv_within_conda_path"
+    tar_pipe "$src" "$dest"
+    del "$dest/.git"
+    del "$dest/.hg"
+}
+
+do_add_activate_to_bashrc () {
+    $add_activate_to_bashrc || { echo "Not adding to bashrc"; return 0; }
+    local fn="$HOME/.bashrc"
+    local msg='source "'$conda_prefix''$_bashenv_within_conda_path'/be_active"'
+    nfo "Adding to $fn: $msg"
+    local i="`mktemp`" # sed !
+    cat "$fn" | grep -v "$_bashenv_within_conda_path" | grep -v "Added by bashenv" > "$i"
+    cat "$i" > "$fn"
+    msg="# Added by bashenv installer [`date`]:\n$msg"
+    echo -e "\n$msg" >> "$fn"
+}
+
+do_activate_subshell () {
+    $activate_when_done || return 0
+    nfo "Activating $conda_prefix"
+    /bin/bash --rcfile "$conda_prefix$_bashenv_within_conda_path/be_active"
+}
+
+main () {
+    source_functions
+    parse_cli $* || exit_sh_help
+    sh do_check_if_located_within_existing_install || true
+    sh do_check_if_conda_is_activated || true
+    sh do_activate_existing_for_git_hg || true
+    sh do_check_set_bootstrap_mode
+    #sh do_bootstrap_remove_existing
+    # sh fetch_repo_to_update_url || die "Error fetching repo"
+    $bootstrap_mode && {
+        sh do_bootstrap_remove_existing
+        sh get_miniconda
+        sh chmod_conda
+        sh inst_conda
+        sh activate_conda
+        sh add_base_packages
+    }
+    sh do_fail_on_no_git_hg
+    sh add_base_env
+    sh clean_conda
+    sh cd_conda
+    sh create_dvcs_if_not_exists
+    sh do_add_activate_to_bashrc
+    sh do_push_up_to_master
+    sh test_success
+    show_info
+    sh do_activate_subshell
+}
+
+main $*

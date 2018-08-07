@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+#!/usr/bin/env bash
+
+me="$0"
+be_dir="$(unset CDPATH && cd "$(dirname "${BASH_SOURCE[0]}")" && echo $PWD)"
+
+usage="Bashenv Activator
+
+Usage [sourced ]: source $me [features]
+Usage [executed]: $me [features]
+
+
+Options:
+-c: Alternate config file. Default: '../config'
+
+Actions:
+
+Example:
+
+"
+
+
+fn_config="$be_dir/../config"
+run_cmd=
+run_args=
+features_not_present=
+dvcs="${dvcs:-git}"
+be_theme="${be_theme:-default}"
+be_features="${be_features:-}"
+
+parse_cli () {
+    while getopts "hc:" opt; do
+        case "$opt" in
+            c) fn_config="$OPTARG";;
+            h) exit_sh_help;;
+            *) exit_sh_help;;
+        esac
+    done
+    shift $((OPTIND-1))
+    run_cmd="${1:-}"
+    test "${run_cmd:-}x" == "x" || shift
+    run_args=$*
+}
+
+export_activation_command_for_subprocesses () {
+    activate_bash_env () {
+        source "$be_dir" $be_features
+    }
+    export be_features
+    export -f activate_bash_env
+}
+
+run_sourced () {
+    set -eu
+    set -a
+    base_activations () {
+        set -a
+        source "$be_dir/environ"
+        source "$be_dir/functions"
+        source "$be_dir/aliases"
+        $be_interactive || be_theme="nocolors"
+        source "$be_dir/themes/outfuncs"
+        source "$be_dir/themes/$be_theme"
+        set +a
+    }
+
+
+    optional_activations () {
+        local activate
+        for f in $*; do
+            activate="$be_dir/feature_$f/activate"
+            test -e "$activate" || {
+                warn "!! Not found: $activate"
+                features_not_present="$features_not_present $f"
+                continue
+            }
+            source "$activate"
+        done
+    }
+
+    base_activations
+    parse_cli $*
+    optional_activations $*
+    export_activation_command_for_subprocesses
+
+}
+
+run_sourced $*
+
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 0
+
+# --------------------------------------- End. Below only run when executing us
+set -eu
+
+main () {
+    for f in $features_not_present; do
+        "$be_dir/misc/features_installer" install "$f"
+    done
+}
+
+
+main $*

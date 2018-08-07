@@ -1,0 +1,7 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhist_cnt =5
+let g:netrw_dirhist_1='/foo'
+let g:netrw_dirhist_2='/opt/mm/repositories/xc/lib/python2.7/site-packages/axc_app/spec/templates/old'
+let g:netrw_dirhist_3='/opt/mm/repositories/xc/lib/python2.7/site-packages/axc_app/tools'
+let g:netrw_dirhist_4='/root/consul'
+let g:netrw_dirhist_5='/xc/lib/python2.7/site-packages/axc_app/cli'

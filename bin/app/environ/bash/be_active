@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+#!/usr/bin/env bash
+
+usage="Bashenv Activator
+
+Usage [sourced ]: source be_active
+
+
+Options:
+-c: Alternate config file. Default: '../config'
+
+Actions:
+
+Example:
+
+"
+set -a
+be_dir="$(unset CDPATH && cd "$(dirname "${BASH_SOURCE[0]}")" && echo $PWD)"
+be_config_file="$be_dir/config"
+run_cmd=
+run_args=
+be_dvcs="${dvcs:-git}"
+set +a
+
+exit_sh_help () { echo -e "$usage"; exit ${1:-0}; }
+
+parse_cli () {
+    while getopts "hc:" opt; do
+        case "$opt" in
+            c) be_config_file="$OPTARG";;
+            h) exit_sh_help;;
+            *) exit_sh_help 1;;
+        esac
+    done
+    shift $((OPTIND-1))
+    run_cmd="${1:-}"
+    test "${run_cmd:-}x" == "x" || shift
+    run_args=$*
+}
+
+export_activation_command_for_subprocesses () {
+    activate_bash_env () {
+        source "$be_dir" $be_features
+    }
+    export be_features
+    export -f activate_bash_env
+}
+
+source_config () {
+    set -a
+    source "$be_config_file"
+    set +a
+}
+
+base_activations () {
+    set -a
+    source "$be_dir/functions"
+    source "$be_dir/aliases"
+    local p="`( cd "$be_dir"; cd ..; cd ..; cd ..; pwd; )`"
+    add_path "$p"
+    set +a
+}
+
+main () {
+    set -u
+
+    parse_cli $*
+    source_config
+    base_activations
+
+}
+
+main $*
+

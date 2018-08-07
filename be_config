@@ -1,0 +1,21 @@
+# Tue Aug  7 04:04:52 CEST 2018
+# by /root/gk/bashenv/misc/create_bashenv/create -b -c reactive_python2.7 go
+#!/usr/bin/env bash
+
+conda_prefix="/xc.$(basename $be_config_file)"
+
+packages="-c conda-forge jq httpie
+"
+
+pips="structlog rx gevent"
+
+tests='
+http --version
+jq --version
+'
+
+local_pypath_from_sys_path_in="/opt/axess/bin/paster"
+
+tests_python='import rx, structlog; print(structlog, rx)'
+
+

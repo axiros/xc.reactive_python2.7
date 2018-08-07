@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# File is sourced by activate - then the theme itself is source
+# -> theme can override these
+
+set -u
+
+
+
+out () {
+    echo -e $* >&2
+}
+warn () {
+    out "$R█ $O$*$O"
+}
+good () {
+    out "$G█ $O$*$O"
+}
+die () {
+    termout=true
+    warn "$*"
+    exit 1
+}
+
+hl () {
+    out "$I█ $I$*$O"
+}
+
+dbg () {
+    out "$L█ $L$*$O"
+}
+
+
+nfo () {
+    out "$M█ $O$*$O"
+}
+
+sh_axc () {
+    out "This is $M$type $I$name $L[$AXC_CLS]$O"
+}
+
+show () {
+    dbg "$*"
+    $*
+}
+
+die () {
+    warn "$msg"
+    exit 1
+}
+
+title () { cli_markdown "# $*"; }
+
+title2 () { cli_markdown "## $*"; }
+
+sep () { cli_markdown "---"; }
+
+$be_interactive || export be_theme="nocolors"

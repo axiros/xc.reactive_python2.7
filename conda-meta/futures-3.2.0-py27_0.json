@@ -1,0 +1,35 @@
+{
+  "arch": "x86_64", 
+  "build": "py27_0", 
+  "build_number": 0, 
+  "depends": [
+    "python >=2.7,<2.8.0a0"
+  ], 
+  "files": [
+    "lib/python2.7/site-packages/concurrent/__init__.py", 
+    "lib/python2.7/site-packages/concurrent/__init__.pyc", 
+    "lib/python2.7/site-packages/concurrent/futures/__init__.py", 
+    "lib/python2.7/site-packages/concurrent/futures/__init__.pyc", 
+    "lib/python2.7/site-packages/concurrent/futures/_base.py", 
+    "lib/python2.7/site-packages/concurrent/futures/_base.pyc", 
+    "lib/python2.7/site-packages/concurrent/futures/process.py", 
+    "lib/python2.7/site-packages/concurrent/futures/process.pyc", 
+    "lib/python2.7/site-packages/concurrent/futures/thread.py", 
+    "lib/python2.7/site-packages/concurrent/futures/thread.pyc", 
+    "lib/python2.7/site-packages/futures-3.2.0-py2.7.egg-info/PKG-INFO", 
+    "lib/python2.7/site-packages/futures-3.2.0-py2.7.egg-info/SOURCES.txt", 
+    "lib/python2.7/site-packages/futures-3.2.0-py2.7.egg-info/dependency_links.txt", 
+    "lib/python2.7/site-packages/futures-3.2.0-py2.7.egg-info/not-zip-safe", 
+    "lib/python2.7/site-packages/futures-3.2.0-py2.7.egg-info/top_level.txt"
+  ], 
+  "installed_by": "base_hg_git_construct-1.0.0-Linux-x86_64.sh", 
+  "license": "PSF", 
+  "link": null, 
+  "md5": "6892ff402aef19d82a6472ce5c2c1ea9", 
+  "name": "futures", 
+  "platform": "linux", 
+  "subdir": "linux-64", 
+  "timestamp": 1530735271877, 
+  "url": "http://repo.anaconda.com/pkgs/main/linux-64/futures-3.2.0-py27_0.tar.bz2", 
+  "version": "3.2.0"
+}

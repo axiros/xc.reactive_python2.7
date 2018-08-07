@@ -1,0 +1,4 @@
+[http]
+	sslVerify = true
+	sslCAPath = /xc.reactive_python2.7/ssl/cacert.pem
+	sslCAInfo = /xc.reactive_python2.7/ssl/cacert.pem

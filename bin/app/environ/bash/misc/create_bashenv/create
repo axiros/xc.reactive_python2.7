@@ -1,0 +1,460 @@
+#!/usr/bin/env bash
+
+me="$0"
+here="$(unset CDPATH && cd "$(dirname "$BASH_SOURCE")" && echo $PWD)"
+
+# TODO: understand envs and $pyver (hg then in env)
+
+# we don't do tmp, thats to risky in container age's private tmps:
+conda_prefix="/xc"
+channels=
+packages=
+pips=
+base_packages="git mercurial constructor"
+dvcs=git
+HOME="${HOME:-/root}"
+be_config_file=
+
+# filename which sets sys.path, which we will turn into PYTHONPATH:
+# e.g. a buildout result:
+local_pypath_from_sys_path_in=
+
+cached_installer="/tmp/miniconda2.sh"
+
+usage="Creates Bashenv Repos From Scratch
+
+Usage: $me [OPTIONS] go
+
+Options:
+-b: Bootstrap. We create a bashenv from scratch, i.e. not a new one from within
+    an existing install with same prefix.
+-c: Read config file [default from any activated bashenv's prefix/be_config file
+    Samples in misc/be_configs
+-C: Use this conda installer file [$cached_installer]
+-c: Create new repo - removing exiting $conda_prefix.$dvcs, if present
+-d: DVCS [$dvcs]
+-P: Push updates back to master
+-p: Set conda prefix [default: $conda_prefix]. If we are within another prefix this
+    sets -b
+-A: Add activate statement to $HOME/.bashrc
+
+If you point -g to a remote repo, you need git/hg already when running this - we do not
+download this as zip, just in order to create this ;-)
+
+Actions:
+- Downloads initial conda if not present in $here
+- Then runs the flow in main, ending in a git repo.
+
+Example:
+$me -rpg https://github.com/axiros/bashenv_kickstart go
+"
+
+# reminder: -e fails script also if last statement of a function is false
+set -eu
+
+
+# you could point this to a conda built by constructor, already containing
+# more stuff:
+conda_url="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh"
+
+bootstrap_mode=false
+create_new_repo=false
+
+# remove all $conda_prefix/pkgs after install:
+remove_packages=true
+push_back=false
+
+add_activate_to_bashrc=false
+
+
+# -------------------------------------------------------------------- internal
+_opts="c:C:Ad:bp:g:xh"
+_take_bashenv_from_conda_prefix=
+# fix. always:
+_bin_app_env_bash="/bin/app/environ/bash"
+_fn_default_readme="$here/README_default.md"
+# -----------------------------------------------------------------------------
+
+source_functions () {
+    source "$here/../../functions"
+}
+
+parse_cli () {
+    echo "----"
+    echo "$me $*"
+    echo "----"
+    OPTIND=
+    while getopts "$_opts" opt; do
+        case "$opt" in
+            d) dvcs="$OPTARG";;
+            c) be_config_file_orig="$OPTARG";; # read already for config defaults
+            h) exit_sh_help;;
+            A) add_activate_to_bashrc=true;;
+            b) bootstrap_mode=true;;
+            c) create_new_repo=true;;
+            p) conda_prefix="$OPTARG";;
+            C) cached_installer="$OPTARG";;
+            P) push_back=true;;
+            g) repo_to_update_dir_or_url="$OPTARG";;
+            x) set -x;;
+            *) exit_sh_help 1
+        esac
+    done
+    shift $((OPTIND-1))
+    run_cmd="${1:-}"
+    test "${run_cmd:-}x" != "gox" && exit_sh_help 1 || return 0
+}
+
+do_bootstrap_remove_existing () {
+    test -e "$conda_prefix" || {
+        echo "None found at $conda_prefix"
+        return 0
+    }
+    msg="$conda_prefix already present"
+    msg="$msg - move it away, then run $me again from there"
+    die "$msg"
+}
+
+_xxxfetch_repo_to_update_url () {
+    local u="${repo_to_update_dir_or_url:-}"
+    test "x$u" == "x" && { echo "none given"; return 0; }
+    test -e "$u" && {
+        local d="$u/.git"
+        test -e "$d" || { "$u has not .git"; return 1; }
+        update_git_dir="$d"
+        return 0
+    }
+    which git || { echo "have not git for $u"; return 1; }
+    test -e "$conda_prefix.orig" && {
+        echo "removing old $conda_prefix.orig"
+        del "$conda_prefix.orig"
+    }
+    git clone  "$u" "$conda_prefix.orig"
+    update_git_dir="$conda_prefix.orig/.git"
+}
+
+
+get_miniconda () {
+    test -e "$cached_installer" && { echo "already present: $cached_installer"; return 0; }
+    web_get "$conda_url" "$cached_installer"
+}
+
+chmod_conda () { chmod +x "$cached_installer"; }
+
+inst_conda () {
+    "$cached_installer" -b -p "$conda_prefix"
+}
+
+activate_conda () {
+    export PATH="$conda_prefix/bin:$PATH"
+    test "`python -c 'import sys; print(sys.executable)'`" == \
+          "$conda_prefix/bin/python" || die "activation error"
+}
+
+add_base_packages () {
+    echo "Adding base package $base_packages"
+    conda install -y $base_packages
+}
+
+clean_conda () {
+    $remove_packages || return 0
+    for d in man pkgs
+    do
+        del "$conda_prefix/$d"
+    done
+
+}
+
+is_hg () { test "$dvcs" == "hg"; }
+
+cd_conda () { cd "$conda_prefix"; }
+
+create_dvcs_repo_if_missing () {
+    test "${create_new_repo:-}x" == "xtrue" && del "$conda_prefix/.$dvcs"
+    test -e "$conda_prefix/.$dvcs" || {
+        $dvcs init
+        is_hg && {
+            local fni=".hgignore"
+            echo "syntax: glob" > "$fni"
+
+        } || { fni=".gitignore"; del "$fni"; }
+        cat "$here/default_ignore_file" >> "$fni"
+        $dvcs add "$fni" || true
+    }
+    test -e "README.md" || cat "$_fn_default_readme" > "README.md"
+    echo "Adding:"
+    $dvcs status
+    is_hg && hg -q addrem
+    is_hg || git add -A
+    $dvcs commit -qam 'by create' || true
+    return 0
+}
+
+
+do_push_up_to_master () {
+    $push_back || { echo "not pushing back"; return 0; }
+    $dvcs push
+}
+
+test_success () {
+    which python | grep "$conda_prefix" | grep -v grep >/dev/null
+    have_be_config_file || return 0
+
+    while read -r line; do
+        line="`echo "$line" | xargs`"
+        test "${line:-}x" == "x" && continue
+        nfo "testing: $line"
+        $line
+    done <<< "${tests:-}"
+
+    while read -r line; do
+        line="`echo "$line" | xargs`"
+        test "${line:-}x" == "x" && continue
+        nfo "testing: python -c $line"
+        eval "python -c \"$line\""
+    done <<< "${tests_python:-}"
+
+}
+
+show_info () {
+    echo "Init conda installed."
+    echo "prefix: "$conda_prefix""
+    echo "base_packages: "$base_packages""
+    echo
+    echo ".$dvcs is updated"
+    $push_back && echo "The repo was pushed" || echo "The repo can be pushed"
+    echo
+    echo "Activate with:"
+    echo "source "$conda_prefix"/bin/activate"
+}
+do_check_if_located_within_existing_install () {
+    local d="$here"
+    test "${_take_bashenv_from_conda_prefix:-}x" != "x" && return 0
+    while true; do
+        test "x$d" == "x/" && return 1
+        d="`dirname "$d"`"
+        test -e "$d/conda" && {
+            _take_bashenv_from_conda_prefix="`dirname "$d"`"
+            echo "we are running within bashenv $_take_bashenv_from_conda_prefix"
+            return 0
+        }
+    done
+}
+
+do_check_if_conda_is_activated () {
+    # if the user did activate a conda we take all from that one then.
+    local d="`python -c 'import sys; print(sys.executable)'`"
+    d="`dirname "$d"`"
+    d="`dirname "$d"`"
+    local b="$d$_bin_app_env_bash"
+    test -e "$b" || return 1
+    echo "activated conda found at "$d". Will take bashenv from $b."
+    local h="$_take_bashenv_from_conda_prefix"
+    test "${h:-}x" || {
+    test "x$h" != "x$d" && echo "(ignoring $h)"
+    }
+    _take_bashenv_from_conda_prefix="$d"
+}
+
+do_activate_existing_for_git_hg () {
+    do_check_if_conda_is_activated || \
+    do_check_if_located_within_existing_install && \
+    export PATH="$_take_bashenv_from_conda_prefix/bin:$PATH"
+    do_check_if_conda_is_activated || return 1
+}
+
+do_check_set_bootstrap_mode () {
+    test "x$_take_bashenv_from_conda_prefix" == "x" && bootstrap_mode=true
+    echo "bootstrap mode: $bootstrap_mode"
+}
+
+take_bash_env_dir () {
+    $bootstrap_mode && { echo "`( cd $here/../../ && pwd )`"; return 0; }
+    local s="$_take_bashenv_from_conda_prefix$_bin_app_env_bash"
+    test -e "$s" || die "Error, $s not found"
+    echo "$s"
+}
+
+prevent_copy_into_same_dir () {
+    local src="`take_bash_env_dir`"
+    case "$conda_prefix" in "$src"*)
+        die "Refusing - $conda_prefix within $src"
+    esac
+}
+
+do_fail_on_no_git_hg () {
+    echo -e "$L\nchecking hg"
+    hg version | head -n 1 || die "hg not found"
+    echo -e "\nchecking git"
+    git version || die "git not found"
+    good "both present"
+}
+
+copy_base_env_over () {
+    local src="`take_bash_env_dir`"
+    local dest="$conda_prefix$_bin_app_env_bash"
+    tar_pipe "$src" "$dest"
+    # could not commit otherwise:
+    nfo "removing any $dvcs dirs at $dest"
+    ( cd "$dest" && find . | grep '.'$dvcs'$' | xargs rm -rf )
+}
+
+add_activate_script () {
+    local d="$conda_prefix/etc/conda/activate.d"
+    mkdir -p "$d"
+    echo -e "#!/usr/bin/env bash
+source "\$CONDA_PREFIX$_bin_app_env_bash/be_active"
+    " > "$d/bashenv.sh"
+}
+
+do_add_activate_to_bashrc () {
+    $add_activate_to_bashrc || { echo "Not adding to bashrc"; return 0; }
+    local fn="$HOME/.bashrc"
+    local marker='/bin/activate" # bashenv'
+    local msg='source "'$conda_prefix''$marker''
+    nfo "Adding to $fn: $msg"
+    local i="`mktemp`" # sed !
+    cat "$fn" | grep -v "$marker" | grep -v "Added by bashenv" > "$i"
+    cat "$i" > "$fn"
+    echo "# Added by bashenv installer [`date`]" >> "$fn"
+    echo -e "$msg" >> "$fn"
+}
+
+have_be_config_file () {
+    test "${be_config_file:-}x" == "x" && return 1
+    return 0
+}
+
+source_configfile () {
+    #while getopts "c:" opt 2>/dev/null; do
+    while getopts "$_opts" opt; do
+        case "$opt" in
+            c) be_config_file="`readlink -f "$OPTARG"`";; # abspath, we will cd
+            *) true;;
+        esac
+    done
+
+    have_be_config_file || {
+        local ec="${_take_bashenv_from_conda_prefix:-xx}/be_config"
+        test -e "$ec" && {
+            be_config_file="$ec"
+        }
+    }
+    have_be_config_file || {
+        warn "no config file"
+        return 0
+    }
+    set -a
+    nfo "Sourcing $be_config_file"
+    source "$be_config_file" || exit_sh_help 1
+    set +a
+}
+
+add_channels () {
+    for c in $channels; do
+        nfo "Adding channel $c"
+        conda config --add channels "$c"
+    done
+}
+
+add_packages () {
+    while read -r line; do
+        line="`echo "$line" | xargs`"
+        test "${line:-}x" == "x" && continue
+        nfo "conda install $line"
+        conda install -y $line
+    done <<< "$packages"
+}
+
+add_pips () {
+    for c in $pips; do
+        nfo "Adding pip $c"
+        pip install "$c"
+    done
+}
+
+add_locals () {
+    local lpfs="$local_pypath_from_sys_path_in"
+    test "${lpfs:-}x" == "x" && return 0
+    local d="`mktemp -d`"
+    cp "$lpfs" "$d/lpfs.py"
+    local pp="`( cd "$d" && python -c 'if 1:
+        import sys, lpfs
+        print(":".join(sys.path))'
+    )`"
+    d="$conda_prefix/etc/conda/activate.d/local_pypath_from_sys.sh"
+    echo "# from $lpfs:" > "$d"
+    echo 'export PYTHONPATH="'$pp':${PYTHONPATH:-}"' >> "$d"
+    nfo "have written $d:"
+    cat "$d"
+}
+
+force_utf8 () {
+    # on py2 there were problems sourcing activtion shell scripts with unicode.
+    # they went away after setting FILESSYSTEMENCODING away from
+    # ANSI_X3.4-1968o to utf-8
+    # lets force all utf-8 and get fine python2:
+    test -e "$conda_prefix/lib/python2.7/" || return 0
+    local lc="$conda_prefix/lib/python2.7/sitecustomize.py"
+    cp "$here/utf8_2.7_sitecustomize.py" "$lc"
+    sh cat "$lc"
+}
+
+write_be_config () {
+    local c="$conda_prefix/be_config"
+    echo "# `date`"     > "$c"
+    echo "# by $me $*" >> "$c"
+    `have_be_config_file` && {
+        echo "# config contents:"
+        cat "$be_config_file" >> "$c"
+    }
+    echo >> "$c"
+}
+
+mkdir_etc_conda_activate () {
+    # contains all activation scripts, sourced:
+    mkdir -p "$conda_prefix/etc/conda/activate.d"
+}
+
+main () {
+    source_functions
+    sh do_check_if_conda_is_activated || true
+    sh do_check_if_located_within_existing_install || true
+    sh source_configfile $*
+    parse_cli $* || exit_sh_help
+    sh do_activate_existing_for_git_hg || true
+    sh do_check_set_bootstrap_mode
+    sh prevent_copy_into_same_dir
+    #sh do_bootstrap_remove_existing
+    # sh fetch_repo_to_update_url || die "Error fetching repo"
+    $bootstrap_mode && {
+        sh do_bootstrap_remove_existing
+        sh get_miniconda
+        sh chmod_conda
+        sh inst_conda
+        sh activate_conda
+        sh add_base_packages
+    }
+    sh mkdir_etc_conda_activate
+    sh do_fail_on_no_git_hg
+    sh copy_base_env_over
+    sh add_activate_script
+    sh add_channels
+    sh add_packages
+    sh add_pips
+    sh add_locals
+    sh force_utf8
+    sh write_be_config $*
+    sh clean_conda
+    sh cd_conda
+    sh create_dvcs_repo_if_missing
+    sh do_add_activate_to_bashrc
+    sh do_push_up_to_master
+    sh test_success
+    show_info
+}
+
+# sourced? then return
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && return 0
+
+main $*

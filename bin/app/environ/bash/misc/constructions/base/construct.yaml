@@ -1,0 +1,35 @@
+name: base_hg_git_construct
+version: 1.0.0
+
+# Details:
+# http://github.com/conda/constructor/blob/master/CONSTRUCT.md
+
+install_in_dependency_order: True
+
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+
+specs:
+  - python 2*
+  - conda
+  - constructor
+  - git
+  - mercurial
+
+keep_pkgs: true
+
+# containing the channels:
+write_condarc: true
+
+company: Axiros GmbH
+
+# run when running the installer, getting $PREFIX:
+pre_install:
+post_install:
+
+exclude:
+
+# when running installer with -b we add to bash by default or not:
+#add_to_path_default: true
+#license_file: EULA.txt
+

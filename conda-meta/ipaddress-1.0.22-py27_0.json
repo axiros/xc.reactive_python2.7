@@ -1,0 +1,28 @@
+{
+  "arch": "x86_64", 
+  "build": "py27_0", 
+  "build_number": 0, 
+  "depends": [
+    "python >=2.7,<2.8.0a0"
+  ], 
+  "files": [
+    "lib/python2.7/site-packages/ipaddress-1.0.22-py2.7.egg-info/PKG-INFO", 
+    "lib/python2.7/site-packages/ipaddress-1.0.22-py2.7.egg-info/SOURCES.txt", 
+    "lib/python2.7/site-packages/ipaddress-1.0.22-py2.7.egg-info/dependency_links.txt", 
+    "lib/python2.7/site-packages/ipaddress-1.0.22-py2.7.egg-info/installed-files.txt", 
+    "lib/python2.7/site-packages/ipaddress-1.0.22-py2.7.egg-info/top_level.txt", 
+    "lib/python2.7/site-packages/ipaddress.py", 
+    "lib/python2.7/site-packages/ipaddress.pyc"
+  ], 
+  "installed_by": "base_hg_git_construct-1.0.0-Linux-x86_64.sh", 
+  "license": "PSF 2", 
+  "license_family": "PSF", 
+  "link": null, 
+  "md5": "3ff78790b92ed2bb5c73c031db1104da", 
+  "name": "ipaddress", 
+  "platform": "linux", 
+  "subdir": "linux-64", 
+  "timestamp": 1523974561353, 
+  "url": "http://repo.anaconda.com/pkgs/main/linux-64/ipaddress-1.0.22-py27_0.tar.bz2", 
+  "version": "1.0.22"
+}

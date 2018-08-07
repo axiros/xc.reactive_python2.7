@@ -1,0 +1,17 @@
+{
+  "arch": "x86_64", 
+  "build": "1", 
+  "build_number": 1, 
+  "depends": [], 
+  "files": [], 
+  "installed_by": "base_hg_git_construct-1.0.0-Linux-x86_64.sh", 
+  "license": "BSD 3-Clause", 
+  "link": null, 
+  "md5": "f98669af452e8d81a8710f1e7cc932b2", 
+  "name": "conda-env", 
+  "platform": "linux", 
+  "subdir": "linux-64", 
+  "timestamp": 1530812938329, 
+  "url": "http://repo.anaconda.com/pkgs/main/linux-64/conda-env-2.6.0-1.tar.bz2", 
+  "version": "2.6.0"
+}

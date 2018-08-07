@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# File is sourced by /root/.bashrc after activation
+
+set -u
+
+#[[ $- == *i* ]] && be_interactive=true || be_interactive=false
+[[ -t 1 ]] && be_interactive=true || be_interactive=false
+
+# evaluated in the `go` function (go bashe):
+export be_go_target_bashenv="${be_dir:-}"
+export be_interactive
+

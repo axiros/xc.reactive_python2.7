@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+conda_prefix="/xc.$(basename $be_config_file)"
+
+packages="-c conda-forge jq httpie
+"
+
+pips="structlog rx"
+
+tests='
+http --version
+jq --version
+'
+tests_python='import rx, structlog; print(structlog, rx)'
+

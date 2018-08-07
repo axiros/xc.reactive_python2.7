@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# We have environ and functions sourced
+
+set -u
+
+test "${be_dir:-}x" == "x" && { echo "activate please"; return 1; }
+
+main () {
+    $be_interactive || return 0 # aliases are for humans
+    require vim nofail && {
+        alias vim="`which vim` -u "$be_dir/vim/vimrc""
+        alias vi="vim"
+    }
+}
+
+main

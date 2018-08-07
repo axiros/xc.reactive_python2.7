@@ -1,0 +1,143 @@
+{
+  "arch": "x86_64",
+  "build": "4",
+  "build_number": 4,
+  "channel": "https://conda.anaconda.org/conda-forge/linux-64",
+  "constrains": [],
+  "depends": [
+    "oniguruma 6.8.*"
+  ],
+  "extracted_package_dir": "/xc.reactive_python2.7/pkgs/jq-1.5-4",
+  "features": "",
+  "files": [
+    "bin/jq",
+    "include/jq.h",
+    "include/jv.h",
+    "lib/libjq.a",
+    "lib/libjq.la",
+    "lib/libjq.so",
+    "lib/libjq.so.1",
+    "lib/libjq.so.1.0.4",
+    "share/doc/jq/AUTHORS",
+    "share/doc/jq/COPYING",
+    "share/doc/jq/README",
+    "share/doc/jq/README.md",
+    "share/man/man1/jq.1"
+  ],
+  "fn": "jq-1.5-4.tar.bz2",
+  "license": "MIT",
+  "link": {
+    "source": "/xc.reactive_python2.7/pkgs/jq-1.5-4",
+    "type": 1
+  },
+  "md5": "5b947b0ef16a7b99fd5c8db70249bc4e",
+  "name": "jq",
+  "package_tarball_full_path": "/xc.reactive_python2.7/pkgs/jq-1.5-4.tar.bz2",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/jq",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/feedstock_root/build_artefacts/jq_1521214039994/_b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold",
+        "sha256": "9ca8f677375e252d7c38476287346acd18fa0b70a9d63154fca1e6254597ab7e",
+        "sha256_in_prefix": "221d4b0e279eac8f5776aadbf90b81fb8ca7cbbcf076b1802123e994bc1397ab",
+        "size_in_bytes": 2188359
+      },
+      {
+        "_path": "include/jq.h",
+        "path_type": "hardlink",
+        "sha256": "d26c9f99d3ff4f20d092292695d5817ce9ca0d7e134cf23a5207a0722a14bb71",
+        "sha256_in_prefix": "d26c9f99d3ff4f20d092292695d5817ce9ca0d7e134cf23a5207a0722a14bb71",
+        "size_in_bytes": 2108
+      },
+      {
+        "_path": "include/jv.h",
+        "path_type": "hardlink",
+        "sha256": "3fcaa480247984dffd352a415d8eda43329280bd4400015c262e9f8e1912088b",
+        "sha256_in_prefix": "3fcaa480247984dffd352a415d8eda43329280bd4400015c262e9f8e1912088b",
+        "size_in_bytes": 7353
+      },
+      {
+        "_path": "lib/libjq.a",
+        "path_type": "hardlink",
+        "sha256": "339218a1c1eb688d8fde84d4fa019f890cb78d52559ad76c615247830de36c6e",
+        "sha256_in_prefix": "339218a1c1eb688d8fde84d4fa019f890cb78d52559ad76c615247830de36c6e",
+        "size_in_bytes": 1851918
+      },
+      {
+        "_path": "lib/libjq.la",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/opt/anaconda1anaconda2anaconda3",
+        "sha256": "47990a443dc88024b383f49454cb2177654e4ba26bff3d9a77e345eb43a2306a",
+        "sha256_in_prefix": "0eb898dc169866b01175c1895057c3a901bd2bce98309ab520190f0f83b967e3",
+        "size_in_bytes": 1040
+      },
+      {
+        "_path": "lib/libjq.so",
+        "path_type": "softlink",
+        "sha256": "0adc8af7f4d1280a6a4fad5eccb4b3c2a9844d927a86520fc479c986153e851d",
+        "size_in_bytes": 923285
+      },
+      {
+        "_path": "lib/libjq.so.1",
+        "path_type": "softlink",
+        "sha256": "0adc8af7f4d1280a6a4fad5eccb4b3c2a9844d927a86520fc479c986153e851d",
+        "size_in_bytes": 923285
+      },
+      {
+        "_path": "lib/libjq.so.1.0.4",
+        "file_mode": "binary",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/feedstock_root/build_artefacts/jq_1521214039994/_b_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold",
+        "sha256": "0adc8af7f4d1280a6a4fad5eccb4b3c2a9844d927a86520fc479c986153e851d",
+        "sha256_in_prefix": "d577113b56a858ef18ee2a781caf11b92c6e4cb11e2fc54b171d22218c59a919",
+        "size_in_bytes": 923285
+      },
+      {
+        "_path": "share/doc/jq/AUTHORS",
+        "path_type": "hardlink",
+        "sha256": "c9b838f7dfae708c6c0b8c3737b5a6b0d6f48cfe350b63a26fa5394713f1bef7",
+        "sha256_in_prefix": "c9b838f7dfae708c6c0b8c3737b5a6b0d6f48cfe350b63a26fa5394713f1bef7",
+        "size_in_bytes": 4077
+      },
+      {
+        "_path": "share/doc/jq/COPYING",
+        "path_type": "hardlink",
+        "sha256": "d55c522a93dbabb81ffb92a391ed1eb10be4ea69227b5a298927043b6b904fef",
+        "sha256_in_prefix": "d55c522a93dbabb81ffb92a391ed1eb10be4ea69227b5a298927043b6b904fef",
+        "size_in_bytes": 2958
+      },
+      {
+        "_path": "share/doc/jq/README",
+        "path_type": "hardlink",
+        "sha256": "d89150c1ea4290c95631f62810cd8d6993481d5d9811b1c6607abf3d57a0f485",
+        "sha256_in_prefix": "d89150c1ea4290c95631f62810cd8d6993481d5d9811b1c6607abf3d57a0f485",
+        "size_in_bytes": 2298
+      },
+      {
+        "_path": "share/doc/jq/README.md",
+        "path_type": "hardlink",
+        "sha256": "d89150c1ea4290c95631f62810cd8d6993481d5d9811b1c6607abf3d57a0f485",
+        "sha256_in_prefix": "d89150c1ea4290c95631f62810cd8d6993481d5d9811b1c6607abf3d57a0f485",
+        "size_in_bytes": 2298
+      },
+      {
+        "_path": "share/man/man1/jq.1",
+        "path_type": "hardlink",
+        "sha256": "d2375c17a9c975d85cb3ac67eb69d0986601913a1e9d7bba2af221011d25b07a",
+        "sha256_in_prefix": "d2375c17a9c975d85cb3ac67eb69d0986601913a1e9d7bba2af221011d25b07a",
+        "size_in_bytes": 89351
+      }
+    ],
+    "paths_version": 1
+  },
+  "platform": "linux",
+  "requested_spec": "jq",
+  "size": 1597123,
+  "subdir": "linux-64",
+  "track_features": "",
+  "url": "https://conda.anaconda.org/conda-forge/linux-64/jq-1.5-4.tar.bz2",
+  "version": "1.5"
+}

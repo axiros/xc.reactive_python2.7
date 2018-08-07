@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+# File is sourced by activate
+# We have environ
+
+set -u
+funcs_dir="$(unset CDPATH && cd "$(dirname "$BASH_SOURCE")" && echo $PWD)"
+
+set_theme () {
+    export be_theme="${1:-${be_theme:-default}}"
+    source "$funcs_dir/themes/outfuncs"
+    source "$funcs_dir/themes/$be_theme"
+}
+
+test "${be_interactive:-}x" == "x" && source "$funcs_dir/environ"
+test "${be_theme:-}x"       == "x" && set_theme default
+
+
+# Check for a required tool
+#-1: tool
+#-2: [nofail]
+require () {
+    local nofail=false tool="$1"
+    test "${2:-}x" == "nofailx" && nofail=true
+    `type "$tool" 1>/dev/null 2>/dev/null` || {
+        $nofail && return 1
+        die "Required but not present: $tool"
+    }
+}
+
+exit_sh_help () {
+    local exitcode=0
+    if [ "${1:-}x" == "0x" -o "${1:-}x" == "1x" ] ; then
+        exitcode=$1
+        shift
+    fi
+    local h="${1:-${usage:-}}"
+    echo -e "$h"
+    exit $exitcode
+}
+
+# Find files
+#-1: [file match pattern]
+ff () {
+    local pattern="${1:-}"
+    local cmd='find . -type f -type d -name proc -prune -o -name "*"'
+    cmd=''$cmd' | grep -v '.git' | grep -v '.hg' | grep -i "'$pattern'"'
+    echo ''$cmd''
+    eval $cmd
+}
+
+add_path () {
+    # adds the argument to $PATH if not already present
+    if [[ "${2:-}x" == "end_of_pathx" ]]; then
+        [[ "$PATH" != *:$1* ]] && export PATH="$PATH:$1"
+    else
+        if [[ ":$PATH:" != *:$1:* ]]; then export PATH="$1:$PATH"; fi
+    fi
+    return 0
+}
+
+set_go_alias () {
+    # used by aliases - sets go alias if dir exists
+    local key="${1:-tmp}"
+    local dir="${2:-/tmp}"
+    test -e "$dir" && eval 'alias go'$key'="cd "'$dir'""'
+}
+
+
+del () {
+    local d="$1" # unbound fails
+    test -e "$d" || return 0
+    echo "Removing "$d""
+    test "$d" == "/" && die "refusing"
+    /bin/rm -rf "$d"
+}
+
+web_get() {
+    _via_wget () { wget "$1" -O "$2"; }
+    _via_curl () { curl "$1" > "$2";  }
+
+    local url="$1"
+    local dest="$2"
+    builtin type wget 2>/dev/null && {
+        _via_wget "$url" "$dest" || true
+    } || {
+        _via_curl "$url" "$dest" || { echo "Could not download $url"; return 1;}
+    }
+}
+
+tar_pipe () {
+    dbg "copying from \n$1\nto\n$2"
+    test "x$1" == "x$2" && { echo "dir is ident, no op."; return 0; }
+    case "$2" in "$1"*) die "$2 is within $1 - refusing"; esac
+    test -e "$2" || /bin/mkdir -p "$2"
+    ( cd "$1" && /usr/bin/env tar --exclude="$2" -cf - . ) | \
+    ( cd "$2" && /usr/bin/env tar -xpf - )
+}
+
+die () {
+    warn "${1:-FATAL}"
+    exit 1
+}
+
+sh () {
+    local dying=false
+    test "${1:-}x" == "dyingx" && {
+        dying=true
+        shift
+    }
+    local cmd="$*"
+    echo
+    echo -e "${M}$cmd"$O
+    $cmd || { $dying && die "Failed: $cmd" || return 1; }
+}
+
+current_prefix () { local bin="`dirname which python`"; }
+

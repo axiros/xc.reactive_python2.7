@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+
+me="$0"
+here="$(unset CDPATH && cd "$(dirname "$BASH_SOURCE")" && echo $PWD)"
+
+usage="Bashenv Installer
+
+Usage: $me [options]
+
+We expect a \"config\" file next to us.
+
+Options:
+-c: Alternate config file. Default: './config'
+-n: Do NOT try update if it exists
+-K: Bashenv kickstart download url [default: ${bash_env_from}_kickstart/archive/master.zip]
+
+Actions:
+
+Example:
+$me
+"
+
+set -eu
+
+fn_config="$here/config"
+run_cmd=
+run_args=
+try_update=true
+dvcs="git"
+D="$here/bashenv"
+kickstart_conda_prefix="/opt/.bashenv_init_conda"
+kickstart_url=
+
+OPTIND=
+
+# ----------------------------------------------------------------------- tools
+del () {
+    local d="$1" # unbound fails
+    test -e "$d" || return 0
+    echo "Removing "$d""
+    test "$d" == "/" && die "refusing"
+    test "$d" == "" && die "refusing"
+    /bin/rm -rf "$d"
+}
+
+die () {
+    echo "${1:-FATAL}"
+    exit 1
+}
+
+sh () {
+    local cmd="$*"
+    echo
+    echo "---------------------------"
+    echo "Running $cmd"
+    echo "---------------------------"
+    $cmd || die "Failed: $cmd"
+}
+
+tar_pipe () {
+    test -e "$2" || /bin/mkdir -p "$2"
+    ( cd "$1" && /usr/bin/env tar -cf - . ) | ( cd "$2" && /usr/bin/env tar -xpf - )
+}
+
+web_get() {
+    _via_wget () { wget "$1" -O "$2"; }
+    _via_curl () { curl "$1" > "$2";  }
+    local url="$1"
+    local dest="$2"
+    builtin type wget 2>/dev/null && {
+        _via_wget "$url" "$dest" || true
+    } || {
+        _via_curl "$url" "$dest" || { echo "Could not download $url"; return 1;}
+    }
+}
+
+get_dvcs () {
+    local kf="$kickstarter_from"
+    del "$kickstart_conda_prefix"
+    test "${kf:-}x" == "x" && \
+        kickstarter_from="${bash_env_from}_kickstart/archive/master.zip"
+    echo "Getting $dvcs via the kickstarter at $kickstarter_from"
+    local wd="/tmp/workdir.$$"
+    del "$wd"; mkdir -p "$wd"
+    test -e "$kickstarter_from" && {
+        tar_pipe "$kickstarter_from" "$wd/kickstarter"
+    } || {
+       web_get "$kickstarter_from" "$wd/d.zip"
+       unzip -qo "$wd/d.zip" -d "$wd"
+    }
+    /bin/mv "$wd/`/bin/ls $wd/ | grep -v '.zip'`" "$kickstart_conda_prefix"
+    del "$wd"
+}
+
+activate_dvcs () {
+    type $dvcs 2>/dev/null && return 0
+    local p="$kickstart_conda_prefix"
+    test -e "$p/bin/$dvcs" || sh get_dvcs
+    echo "Activating init conda at $p"
+    export PATH="$p/bin:$PATH"
+    type $dvcs || die "could not get $dvcs"
+}
+
+
+# -----------------------------------------------------------------------------
+exit_sh_help () { echo -e "$usage"; exit 1; }
+
+parse_cli () {
+    while getopts "c:nK:" opt; do
+        case "$opt" in
+            c) fn_config="$OPTARG";;
+            n) try_update=false;;
+            K) kickstarter_from="$OPTARG";;
+            *) exit_sh_help
+        esac
+    done
+    shift $((OPTIND-1))
+    run_cmd="${1:-}"
+    test "${run_cmd:-}x" == "x" || shift
+    run_args=$*
+}
+
+source_config () {
+    test -e "$fn_config" || die "$fn_config not found"
+    set -a; source "$fn_config"; set +a
+}
+
+update_if_exists () {
+    test -e "$D/.$dvcs" || return 0
+    $try_update || return 0
+    sh activate_dvcs
+    ( cd "$D" && $dvcs pull; )
+    test "$dvcs" == "hg" && ( cd "$D" && $dvcs up; )
+    return 0
+}
+
+clone_if_not_exists () {
+    test -e "$D" && return 0
+    sh activate_dvcs
+    $dvcs clone "$bash_env_from" "$here/bashenv"
+}
+
+activate_bashenv () {
+    "$D/activate" $run_args
+}
+
+main () {
+    parse_cli $*
+    sh source_config
+    sh update_if_exists
+    sh clone_if_not_exists
+    sh activate_bashenv
+}
+
+main $*

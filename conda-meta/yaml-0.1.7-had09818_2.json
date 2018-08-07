@@ -1,0 +1,27 @@
+{
+  "arch": "x86_64", 
+  "build": "had09818_2", 
+  "build_number": 2, 
+  "depends": [
+    "libgcc-ng 7.2.0.*"
+  ], 
+  "files": [
+    "include/yaml.h", 
+    "lib/libyaml-0.so.2", 
+    "lib/libyaml-0.so.2.0.5", 
+    "lib/libyaml.a", 
+    "lib/libyaml.la", 
+    "lib/libyaml.so", 
+    "lib/pkgconfig/yaml-0.1.pc"
+  ], 
+  "installed_by": "base_hg_git_construct-1.0.0-Linux-x86_64.sh", 
+  "license": "MIT", 
+  "link": null, 
+  "md5": "8bc3d68df049640c74941c52156a2e7a", 
+  "name": "yaml", 
+  "platform": "linux", 
+  "subdir": "linux-64", 
+  "timestamp": 1510609996778, 
+  "url": "http://repo.anaconda.com/pkgs/main/linux-64/yaml-0.1.7-had09818_2.tar.bz2", 
+  "version": "0.1.7"
+}
