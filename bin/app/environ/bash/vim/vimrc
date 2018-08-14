@@ -242,3 +242,9 @@ noremap <Leader>f :set nofoldenable<CR>    " Unfold everything
 autocmd FileType wax colorscheme badwolf 
 " Mouse and backspace
 set mouse=r  " on OSX press ALT and click
+
+
+if &diff
+    colorscheme industry
+endif
+
